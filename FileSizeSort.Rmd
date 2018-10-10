@@ -1,0 +1,52 @@
+---
+title: "Sort_by_file_size_njp"
+author: "njp92"
+date: "September 20, 2018"
+output: html_document
+---
+```{r}
+
+#My function to sort all of the unzipped 5-degree frames. The only input I'll need when I call this is the file path to the unzipped folder
+FileSizeSort <- function(FilePath){
+  
+  #list (which is technically a vector?) all the full names (i.e their paths) of all the 5 degree folders inside the unzipped folder. store that list a variable "files"
+  files  <- list.files(FilePath,full.names = TRUE)
+  
+  #Iterate through the the vector "files"
+  for (i in files){
+    
+    # I don't want to do anything to the folders "large" and "small" which I've created to be my output for the sorted files so I exclude them. I'll iterate through all the 5 degree folders. I need the full file path so I can make the comparison they both have to be full paths
+    if (i != paste0(FilePath,"/large") & i != paste0(FilePath,"/small")) {
+      
+    # There's a linux system command to find the size of a folder (I don't know an R command). Use system2 to create a shell and then run the command within that shell and then close that shell after the command runs. So I can run the system command "du"
+    # "du" is the system command to estimate file space usage. the arguments for that command are "s" summarize. to display only a total for each argument and "m" for megabytes for file size
+    # i is for each element in the vector files
+    # "|" pipe all of that into the cut function
+    # cut is the system command to remove sections from each line of files bc there's some extra junk after the file size
+    # f1 is to take only field 1 (If you need more fields then do "-f1,2" etc)
+    # make it a numeric using as.numeric because otherwise it's a string
+    # divide by 1024 to make it in gigabytes. for some reason the du command doesn't have a g argument to make it in gigabytes at first, just an m for megabytes
+    # save as the variable fi for file
+    fi = as.numeric( system2("du",args = c("-sm",i,"|", "cut", "-f1"),stdout = TRUE))/1024
+    
+        print(i)
+    
+    if (fi >= 5){
+      system2("mv",args = c(i,paste(FilePath,"/large",sep = "")))
+    }
+    else{
+      system2("mv",args = c(i,paste(FilePath,"/small",sep = "")))
+    }
+    }
+  }
+
+}
+  
+
+#File path to all the unzipped, unsorted, uncleaned, downloaded 5 degree frames
+UnzippedUnsortedPath = ("/scratch/njp92/GBIF_Download/1_Unzipped_Data")
+FileSizeSort(FilePath = UnzippedUnsortedPath) 
+
+
+
+```
